@@ -1,0 +1,29 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  nuget:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test
+        run: dotnet test Conq.Noble.Spreadox.sln -c Release --filter Category!=Perf
+
+      - name: Pack
+        run: dotnet pack src/Conq.Noble.Spreadox/Conq.Noble.Spreadox.csproj -c Release --no-build -o artifacts
+
+      - name: Push nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) { throw "Set the NUGET_API_KEY repository secret." }
+          dotnet nuget push artifacts/*.nupkg --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate

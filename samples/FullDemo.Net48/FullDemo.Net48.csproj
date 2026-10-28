@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Conq.Noble.Spreadox.Samples</RootNamespace>
+    <AssemblyName>FullDemo.Net48</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\FullDemoShared\**\*.cs" Link="Shared\%(Filename)%(Extension)" />
+    <ProjectReference Include="..\..\src\Conq.Noble.Spreadox\Conq.Noble.Spreadox.csproj" />
+  </ItemGroup>
+
+</Project>

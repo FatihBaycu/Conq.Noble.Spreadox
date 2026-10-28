@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>Conq.Noble.Spreadox</RootNamespace>
+    <AssemblyName>Conq.Noble.Spreadox</AssemblyName>
+    <AssemblyTitle>Spreadox</AssemblyTitle>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>Conq.Noble.Spreadox</PackageId>
+    <Title>Spreadox</Title>
+    <Description>Spreadox is a high-level C# spreadsheet library for Excel (.xlsx) files. It wraps DocumentFormat.OpenXml, keeps OpenXml types internal, and writes native OOXML charts plus a streaming sheetData path for large exports.</Description>
+    <PackageTags>spreadox;spreadsheet;xlsx;excel;openxml;chart;streaming;ooxml</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>https://github.com/FatihBaycu/Conq.Noble.Spreadox/releases</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Conq.Noble.Spreadox.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+  </ItemGroup>
+
+</Project>

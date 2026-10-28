@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Conq.Noble.Spreadox.Samples</RootNamespace>
+    <AssemblyName>FullDemo.NetCore</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\FullDemoShared\**\*.cs" Link="Shared\%(Filename)%(Extension)" />
+    <ProjectReference Include="..\..\src\Conq.Noble.Spreadox\Conq.Noble.Spreadox.csproj" />
+  </ItemGroup>
+
+</Project>
