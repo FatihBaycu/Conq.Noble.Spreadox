@@ -1,6 +1,6 @@
 # Spreadox — Getting started
 
-High-level Excel (`.xlsx`) API on `DocumentFormat.OpenXml` (`netstandard2.0`). OpenXml types stay **internal**.
+High-level Excel (`.xlsx`) API on `DocumentFormat.OpenXml` (`netstandard2.0`), plus A4 PDF chart reports. OpenXml types stay **internal**. PDF charts use in-memory points, not worksheet ranges.
 
 **Package / namespace:** `Conq.Noble.Spreadox`
 
@@ -14,7 +14,7 @@ Local pack (from this repo):
 
 ```bash
 dotnet pack src/Conq.Noble.Spreadox/Conq.Noble.Spreadox.csproj -c Release -o artifacts
-# artifacts/Conq.Noble.Spreadox.0.7.0.nupkg
+# artifacts/Conq.Noble.Spreadox.0.8.0.nupkg
 ```
 
 Or project-reference `src/Conq.Noble.Spreadox/Conq.Noble.Spreadox.csproj`.
@@ -39,6 +39,22 @@ wb.Save(@"C:\temp\report.xlsx");
 ```
 
 Full runnable sample: `samples/MeasurementChartSample`.
+
+## PDF report
+
+```csharp
+using Conq.Noble.Spreadox;
+
+using var report = PdfReport.Create();
+report.Cover.Title = "Measurements";
+var page = report.AddChartPage("Station");
+page.Chart.Type = ExcelChartType.LineMarker;
+page.Chart.AddSeries("Actual", new[] { "A", "B" }, new[] { 1.0, 2.0 });
+page.Summary.Add("Mean", "1.5");
+report.Save(@"C:\temp\report.pdf");
+```
+
+Runnable sample: `samples/PdfReportSample`.
 
 ## Streaming (large sheetData)
 
@@ -66,4 +82,5 @@ dotnet test Conq.Noble.Spreadox.sln -c Release --filter Category=Perf
 ```bash
 dotnet run --project samples/MeasurementChartSample -c Release
 dotnet run --project samples/FullDemo.NetCore -c Release
+dotnet run --project samples/PdfReportSample -c Release
 ```

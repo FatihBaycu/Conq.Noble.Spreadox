@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullDemo.NetCore", "samples\FullDemo.NetCore\FullDemo.NetCore.csproj", "{62D7F422-E109-473A-9519-55665A484476}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullDemo.Net48", "samples\FullDemo.Net48\FullDemo.Net48.csproj", "{CB57FB16-FB9F-47D5-91BE-737C4A7D3FBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfReportSample", "samples\PdfReportSample\PdfReportSample.csproj", "{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,18 @@ Global
 		{CB57FB16-FB9F-47D5-91BE-737C4A7D3FBE}.Release|x64.Build.0 = Release|Any CPU
 		{CB57FB16-FB9F-47D5-91BE-737C4A7D3FBE}.Release|x86.ActiveCfg = Release|Any CPU
 		{CB57FB16-FB9F-47D5-91BE-737C4A7D3FBE}.Release|x86.Build.0 = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|x64.Build.0 = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Debug|x86.Build.0 = Debug|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|x64.ActiveCfg = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|x64.Build.0 = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|x86.ActiveCfg = Release|Any CPU
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,5 +113,6 @@ Global
 		{93FB869B-3276-4105-A79B-50164D356C4A} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 		{62D7F422-E109-473A-9519-55665A484476} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 		{CB57FB16-FB9F-47D5-91BE-737C4A7D3FBE} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
+		{49DB391D-0B95-4828-BB37-2DD2D32FF8B1} = {5D20AA90-6969-D8BD-9DCD-8634F4692FDA}
 	EndGlobalSection
 EndGlobal

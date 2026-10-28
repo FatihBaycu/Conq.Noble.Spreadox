@@ -12,8 +12,8 @@
     <IsPackable>true</IsPackable>
     <PackageId>Conq.Noble.Spreadox</PackageId>
     <Title>Spreadox</Title>
-    <Description>Spreadox is a high-level C# spreadsheet library for Excel (.xlsx) files. It wraps DocumentFormat.OpenXml, keeps OpenXml types internal, and writes native OOXML charts plus a streaming sheetData path for large exports.</Description>
-    <PackageTags>spreadox;spreadsheet;xlsx;excel;openxml;chart;streaming;ooxml</PackageTags>
+    <Description>Spreadox is a high-level C# library for Excel (.xlsx) workbooks and A4 PDF chart reports. OpenXml types stay internal. PDF uses in-memory series (not OOXML charts).</Description>
+    <PackageTags>spreadox;spreadsheet;xlsx;excel;openxml;chart;streaming;ooxml;pdf</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>https://github.com/FatihBaycu/Conq.Noble.Spreadox/releases</PackageReleaseNotes>
   </PropertyGroup>
@@ -28,7 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="PdfSharpCore" Version="1.3.67" />
   </ItemGroup>
 
 </Project>

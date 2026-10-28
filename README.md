@@ -4,7 +4,7 @@
 [![CI](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml/badge.svg)](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-High-level C# spreadsheet library for Excel (`.xlsx`) files. Built on Microsoft Open XML SDK (`DocumentFormat.OpenXml`). Public API stays free of OpenXml types.
+High-level C# library for Excel (`.xlsx`) workbooks **and** A4 PDF chart reports. Excel is built on Microsoft Open XML SDK (`DocumentFormat.OpenXml`). Public API stays free of OpenXml types. PDF charts are drawn as vectors from in-memory points — they are not OOXML charts.
 
 | | |
 |--|--|
@@ -65,6 +65,27 @@ using (var sw = ExcelStreamingWorkbook.Create(@"C:\temp\large.xlsx"))
 
 See `samples/MeasurementChartSample` and `samples/FullDemo.NetCore` for longer walkthroughs.
 
+## PDF reports
+
+`PdfReport` is a second surface in the same package. Use it for cover + one-chart-per-page A4 landscape PDFs (Analyst-style). Series are arrays, not cell ranges.
+
+```csharp
+using var report = PdfReport.Create(PdfPageSize.A4Landscape);
+report.Cover.Title = "Analyst native PDF";
+report.Cover.Company = "Conq.Noble";
+report.Footer.PageNumberFormat = "Page {0} / {1}";
+
+var page = report.AddChartPage("Station 12");
+page.Chart.Type = ExcelChartType.LineMarker;
+page.Chart.AddSeries("Actual", months, values).SetColor(ExcelColor.FromRgb(0, 82, 147));
+page.Chart.AddConstantLine("UCL", 16, ExcelColor.Red);
+page.Summary.Add("Mean", "12.2");
+
+report.Save(@"C:\temp\report.pdf");
+```
+
+v1 chart kinds: Line+marker, Area, clustered Bar, Pie, Combo (Bar + Line on a 0–100 secondary axis), horizontal constant lines. `BoxAndWhisker` draws as line+marker; stacked-100 draws as clustered bar. Sample: `samples/PdfReportSample`.
+
 ## DOM vs streaming
 
 | | `ExcelWorkbook` | `ExcelStreamingWorkbook` |
@@ -78,7 +99,7 @@ See `samples/MeasurementChartSample` and `samples/FullDemo.NetCore` for longer w
 
 - `src/Conq.Noble.Spreadox` — library
 - `tests/Conq.Noble.Spreadox.Tests` — xUnit + `OpenXmlValidator`
-- `samples/` — net8 and net48 console demos
+- `samples/` — net8 and net48 console demos, plus `PdfReportSample`
 - `docs/getting-started.md` — short usage guide
 
 ## Build, test, pack
@@ -97,8 +118,8 @@ dotnet test Conq.Noble.Spreadox.sln -c Release --filter Category=Perf
 
 Or: `./build-and-test.ps1`
 
-A GitHub Release tagged `v0.7.0` (or later) publishes the package to nuget.org when the `NUGET_API_KEY` repository secret is set.
+A GitHub Release tagged `v0.8.0` (or later) publishes the package to nuget.org when the `NUGET_API_KEY` repository secret is set.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Depends on `DocumentFormat.OpenXml` (MIT).
+MIT — see [LICENSE](LICENSE). Depends on `DocumentFormat.OpenXml` (MIT) and `PdfSharpCore` (MIT). Embedded Liberation Sans fonts are SIL Open Font License.
