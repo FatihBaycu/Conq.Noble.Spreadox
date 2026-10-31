@@ -12,3 +12,7 @@ artifacts/
 *-out.txt
 test-*.txt
 perf-out.txt
+
+# macOS & Temporary local files
+.DS_Store
+Library/

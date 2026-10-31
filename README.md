@@ -2,48 +2,48 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Conq.Noble.Spreadox.svg)](https://www.nuget.org/packages/Conq.Noble.Spreadox)
 [![CI](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml/badge.svg)](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/FatihBaycu/Conq.Noble.Spreadox/blob/main/LICENSE)
 
-High-level, dependency-isolated C# library for **native Excel (`.xlsx`) workbooks** and **vector A4 landscape PDF chart reports**.
+High-level, dependency-isolated C# library for **native Excel (.xlsx) workbooks** and **vector A4 landscape PDF chart reports**.
 
-- **Excel:** Built on Microsoft Open XML SDK (`DocumentFormat.OpenXml`). Open XML types remain internal so your code stays clean. Supports cell styles, formulas, borders, colors, pictures, and native OOXML DrawingML charts.
-- **PDF:** Sharp, scalable vector charts drawn directly from in-memory arrays (powered by `PdfSharpCore`). Includes cover pages, customizable running headers/footers with logos, metric summaries, and runtime TrueType (`.ttf`) font registration.
+- **Excel:** Built on Microsoft Open XML SDK (DocumentFormat.OpenXml). Open XML types remain internal so your code stays clean. Supports cell styles, formulas, borders, colors, pictures, and native OOXML DrawingML charts.
+- **PDF:** Sharp, scalable vector charts drawn directly from in-memory arrays (powered by PdfSharpCore). Includes cover pages, customizable running headers/footers with logos, metric summaries, and runtime TrueType (.ttf) font registration.
 
 | | |
 |---|---|
-| **Package** | `Conq.Noble.Spreadox` |
-| **Namespace** | `Conq.Noble.Spreadox` |
-| **Target** | `netstandard2.0` (.NET Framework 4.8+, .NET 6/8/9+) |
-| **Release Notes** | [CHANGELOG.md](CHANGELOG.md) |
-| **License** | MIT |
+| **Package** | Conq.Noble.Spreadox |
+| **Namespace** | Conq.Noble.Spreadox |
+| **Target** | netstandard2.0 (.NET Framework 4.8+, .NET 6/8/9+) |
+| **Release Notes** | [CHANGELOG.md](https://github.com/FatihBaycu/Conq.Noble.Spreadox/blob/main/CHANGELOG.md) |
+| **License** | [MIT](https://github.com/FatihBaycu/Conq.Noble.Spreadox/blob/main/LICENSE) |
 
 ---
 
 ## Visual Output Examples
 
-### Vector PDF Reports (`PdfReport` & MVC Studio)
+### Vector PDF Reports (PdfReport & MVC Studio)
 
 Vector charts rendered crisply at any zoom level, with running headers, logos, summary sidebars, and control lines.
 
 | MVC Studio Cover Page | Radar Chart & Header (from MVC Studio) |
 |:---:|:---:|
-| ![PDF Cover](docs/images/mvc-pdf-cover.png) | ![PDF Radar Chart](docs/images/mvc-pdf-chart-radar.png) |
+| ![PDF Cover](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/mvc-pdf-cover.png) | ![PDF Radar Chart](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/mvc-pdf-chart-radar.png) |
 
 | Station Measurements (Line + UCL/LCL) | Pareto Combo (Bar + Secondary Line) |
 |:---:|:---:|
-| ![PDF Line Chart](docs/images/pdf-sample-chart-line.png) | ![PDF Pareto Chart](docs/images/pdf-sample-chart-pareto.png) |
+| ![PDF Line Chart](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/pdf-sample-chart-line.png) | ![PDF Pareto Chart](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/pdf-sample-chart-pareto.png) |
 
 | Bounce Rate (Pie Chart & Summary) | Bar Chart (with Summary Metrics) |
 |:---:|:---:|
-| ![PDF Pie Chart](docs/images/mvc-pdf-chart-pie.png) | ![PDF Bar Chart](docs/images/mvc-pdf-chart-bar.png) |
+| ![PDF Pie Chart](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/mvc-pdf-chart-pie.png) | ![PDF Bar Chart](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/mvc-pdf-chart-bar.png) |
 
-### Native Excel Spreadsheets (`ExcelWorkbook`)
+### Native Excel Spreadsheets (ExcelWorkbook)
 
 Standard OOXML DrawingML charts linked to spreadsheet cell ranges with native formatting and styles.
 
 | Excel Spreadsheet with Combo Chart and Summary Grid |
 |:---:|
-| ![Excel Report Sample](docs/images/excel-sample-report.png) |
+| ![Excel Report Sample](https://raw.githubusercontent.com/FatihBaycu/Conq.Noble.Spreadox/refs/heads/main/docs/images/excel-sample-report.png) |
 
 ---
 
@@ -112,7 +112,7 @@ using (var sw = ExcelStreamingWorkbook.Create(@"C:\temp\large.xlsx"))
 
 ## Quick Usage: Vector PDF Reports
 
-`PdfReport` creates publication-ready A4 landscape reports. Series are populated from in-memory arrays rather than worksheet ranges.
+PdfReport creates publication-ready A4 landscape reports. Series are populated from in-memory arrays rather than worksheet ranges.
 
 ```csharp
 using Conq.Noble.Spreadox;
@@ -167,7 +167,7 @@ report.Save(@"C:\temp\report.pdf");
 
 ## Runtime Custom Font Support
 
-Spreadox embeds **Liberation Sans** by default. You can register any TrueType (`.ttf`) font at runtime before building reports:
+Spreadox embeds Liberation Sans by default. You can register any TrueType (.ttf) font at runtime before building reports:
 
 ```csharp
 // From file:
@@ -185,12 +185,12 @@ report.Footer.FontFamily = "Roboto";
 
 ## DOM vs. Streaming Excel
 
-| Feature | `ExcelWorkbook` | `ExcelStreamingWorkbook` |
+| Feature | ExcelWorkbook | ExcelStreamingWorkbook |
 |---|---|---|
 | **Cell Model** | In-memory grid | Rows flushed as written |
 | **Charts / Pictures / Conditional Format** | Full support | Not supported (raw data only) |
 | **Large Exports** | Recommended up to tens of thousands of rows | Ideal for 100,000+ to millions of rows |
-| **Strings Storage** | Shared string table | `inlineStr` (default) or SST |
+| **Strings Storage** | Shared string table | inlineStr (default) or SST |
 
 ---
 
@@ -198,16 +198,16 @@ report.Footer.FontFamily = "Roboto";
 
 Explore the `samples/` directory:
 
-1. **`samples/ReportBuilderMvc` (NEW):**
+1. **samples/ReportBuilderMvc (NEW):**
    - Full ASP.NET Core MVC Web Studio with **English / Turkish** localization.
    - Dynamic random data generator with customizable series count.
-   - Per-series chart type picker (`Column`, `Bar`, `Line`, `Area`, `Pie`, `Combo`, etc.).
+   - Per-series chart type picker (Column, Bar, Line, Area, Pie, Combo, etc.).
    - Live header/footer customization with logo file upload.
-   - Web-based `.ttf` TrueType font uploader and instant registration.
-   - Single-page vs. separate-page export options for both **Excel (`.xlsx`)** and **PDF (`.pdf`)**.
-2. **`samples/MeasurementChartSample`:** Focused console demo for combo charts, statistics, and Excel styling.
-3. **`samples/PdfReportSample`:** Demonstrates multi-page vector PDF reports with cover, combo charts, and control lines.
-4. **`samples/FullDemo.NetCore` / `FullDemo.Net48`:** Deep dive showcasing every Spreadox API feature.
+   - Web-based .ttf TrueType font uploader and instant registration.
+   - Single-page vs. separate-page export options for both **Excel (.xlsx)** and **PDF (.pdf)**.
+2. **samples/MeasurementChartSample:** Focused console demo for combo charts, statistics, and Excel styling.
+3. **samples/PdfReportSample:** Demonstrates multi-page vector PDF reports with cover, combo charts, and control lines.
+4. **samples/FullDemo.NetCore / FullDemo.Net48:** Deep dive showcasing every Spreadox API feature.
 
 Run the MVC Studio sample:
 ```bash
@@ -243,4 +243,4 @@ Tagging a release as `v0.9.0` triggers the automated CI/CD publishing workflow w
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Depends on `DocumentFormat.OpenXml` (MIT) and `PdfSharpCore` (MIT). Embedded Liberation Sans fonts are SIL Open Font License.
+MIT — see [LICENSE](https://github.com/FatihBaycu/Conq.Noble.Spreadox/blob/main/LICENSE). Depends on DocumentFormat.OpenXml (MIT) and PdfSharpCore (MIT). Embedded Liberation Sans fonts are SIL Open Font License.
