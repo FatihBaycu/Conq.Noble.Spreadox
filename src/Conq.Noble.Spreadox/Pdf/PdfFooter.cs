@@ -10,5 +10,7 @@ namespace Conq.Noble.Spreadox
         public string? Text { get; set; }
 
         public PdfImage? Logo { get; set; }
+
+        public string? FontFamily { get; set; }
     }
 }

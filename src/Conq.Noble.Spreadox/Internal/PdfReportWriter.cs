@@ -8,6 +8,7 @@ namespace Conq.Noble.Spreadox.Internal
 {
     internal static class PdfReportWriter
     {
+        private const double HeaderHeight = 36;
         private const double FooterHeight = 22;
 
         public static void Write(PdfReport report, Stream stream)
@@ -45,10 +46,17 @@ namespace Conq.Noble.Spreadox.Internal
             return page;
         }
 
-        private static XRect ContentRect(PdfPage page, PdfMargins margins)
+        private static bool HasHeaderContent(PdfHeader header)
+        {
+            return header != null && (!string.IsNullOrWhiteSpace(header.Title)
+                || !string.IsNullOrWhiteSpace(header.Text)
+                || header.Logo != null);
+        }
+
+        private static XRect ContentRect(PdfPage page, PdfMargins margins, bool hasHeader)
         {
             double left = Mm(margins.Left);
-            double top = Mm(margins.Top);
+            double top = Mm(margins.Top) + (hasHeader ? HeaderHeight : 0);
             double right = Mm(margins.Right);
             double bottom = Mm(margins.Bottom) + FooterHeight;
             return new XRect(left, top, page.Width - left - right, page.Height - top - bottom);
@@ -59,7 +67,13 @@ namespace Conq.Noble.Spreadox.Internal
             PdfPage page = AddPage(document);
             using (XGraphics gfx = XGraphics.FromPdfPage(page))
             {
-                XRect content = ContentRect(page, report.Margins);
+                bool hasHeader = HasHeaderContent(report.Header);
+                if (hasHeader)
+                {
+                    DrawHeader(gfx, page, report);
+                }
+
+                XRect content = ContentRect(page, report.Margins, hasHeader);
                 var titleFont = new XFont(PdfFontResolver.FamilyName, 22, XFontStyle.Bold);
                 var companyFont = new XFont(PdfFontResolver.FamilyName, 12, XFontStyle.Regular);
                 var bodyFont = new XFont(PdfFontResolver.FamilyName, 10, XFontStyle.Regular);
@@ -122,7 +136,13 @@ namespace Conq.Noble.Spreadox.Internal
             PdfPage page = AddPage(document);
             using (XGraphics gfx = XGraphics.FromPdfPage(page))
             {
-                XRect content = ContentRect(page, report.Margins);
+                bool hasHeader = HasHeaderContent(report.Header);
+                if (hasHeader)
+                {
+                    DrawHeader(gfx, page, report);
+                }
+
+                XRect content = ContentRect(page, report.Margins, hasHeader);
                 var titleFont = new XFont(PdfFontResolver.FamilyName, 14, XFontStyle.Bold);
                 gfx.DrawString(chartPage.Title, titleFont, XBrushes.Black,
                     new XRect(content.X, content.Y, content.Width, 22), XStringFormats.TopLeft);
@@ -160,6 +180,68 @@ namespace Conq.Noble.Spreadox.Internal
             }
         }
 
+        private static void DrawHeader(XGraphics gfx, PdfPage page, PdfReport report)
+        {
+            PdfHeader header = report.Header;
+            if (!HasHeaderContent(header))
+            {
+                return;
+            }
+
+            double left = Mm(report.Margins.Left);
+            double right = Mm(report.Margins.Right);
+            double top = Mm(report.Margins.Top);
+            double width = page.Width - left - right;
+
+            string fontFamily = !string.IsNullOrWhiteSpace(header.FontFamily) ? header.FontFamily! : PdfFontResolver.FamilyName;
+            var titleFont = new XFont(fontFamily, header.FontSize, header.Bold ? XFontStyle.Bold : XFontStyle.Regular);
+            double subFontSize = Math.Max(header.FontSize - 3.5, 7.5);
+            var textFont = new XFont(fontFamily, subFontSize, XFontStyle.Regular);
+
+            XBrush titleBrush = header.TitleColor != null
+                ? new XSolidBrush(XColor.FromArgb(header.TitleColor.R, header.TitleColor.G, header.TitleColor.B))
+                : XBrushes.Black;
+
+            double x = left;
+            if (header.Logo != null)
+            {
+                DrawImageAspectFit(gfx, header.Logo, new XRect(x, top, 52, 24));
+                x += 58;
+            }
+
+            double textWidth = width - (x - left);
+            bool hasTitle = !string.IsNullOrWhiteSpace(header.Title);
+            bool hasText = !string.IsNullOrWhiteSpace(header.Text);
+
+            if (hasTitle && hasText)
+            {
+                double titleHeight = Math.Ceiling(header.FontSize * 1.15);
+                gfx.DrawString(header.Title!, titleFont, titleBrush,
+                    new XRect(x, top, textWidth, titleHeight), XStringFormats.TopLeft);
+
+                double textY = top + titleHeight + 2;
+                double textHeight = Math.Ceiling(subFontSize * 1.2);
+                gfx.DrawString(header.Text!, textFont, XBrushes.DimGray,
+                    new XRect(x, textY, textWidth, textHeight), XStringFormats.TopLeft);
+            }
+            else if (hasTitle)
+            {
+                double titleHeight = Math.Ceiling(header.FontSize * 1.25);
+                gfx.DrawString(header.Title!, titleFont, titleBrush,
+                    new XRect(x, top + 4, textWidth, titleHeight), XStringFormats.TopLeft);
+            }
+            else if (hasText)
+            {
+                double textHeight = Math.Ceiling(subFontSize * 1.25);
+                gfx.DrawString(header.Text!, textFont, XBrushes.DimGray,
+                    new XRect(x, top + 4, textWidth, textHeight), XStringFormats.TopLeft);
+            }
+
+            // Divider line placed below subtitle, leaving ~8pt breathing room before content area
+            double lineY = top + HeaderHeight - 8;
+            gfx.DrawLine(new XPen(XColor.FromArgb(210, 210, 210), 0.6), left, lineY, left + width, lineY);
+        }
+
         private static void DrawFooter(XGraphics gfx, PdfPage page, PdfReport report, int pageNo, int totalPages)
         {
             double left = Mm(report.Margins.Left);
@@ -168,7 +250,8 @@ namespace Conq.Noble.Spreadox.Internal
             double width = page.Width - left - right;
             gfx.DrawLine(new XPen(XColor.FromArgb(200, 200, 200), 0.5), left, y, left + width, y);
 
-            var font = new XFont(PdfFontResolver.FamilyName, 8, XFontStyle.Regular);
+            string footerFamily = !string.IsNullOrWhiteSpace(report.Footer.FontFamily) ? report.Footer.FontFamily! : PdfFontResolver.FamilyName;
+            var font = new XFont(footerFamily, 8, XFontStyle.Regular);
             string numbers = string.Format(CultureInfo.InvariantCulture, report.Footer.PageNumberFormat ?? "{0} / {1}", pageNo, totalPages);
             gfx.DrawString(numbers, font, XBrushes.Gray,
                 new XRect(left, y + 4, width, 14), XStringFormats.TopRight);

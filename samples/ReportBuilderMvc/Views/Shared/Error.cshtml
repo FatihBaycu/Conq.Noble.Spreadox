@@ -1,0 +1,14 @@
+@model ReportBuilderMvc.Controllers.ErrorViewModel
+@{
+    ViewData["Title"] = "Hata";
+}
+
+<div class="alert alert-danger my-5">
+    <h1 class="text-danger">Bir Hata Oluştu.</h1>
+    <h2 class="text-danger">İsteğiniz işlenirken bir sorun meydana geldi.</h2>
+    @if (Model.ShowRequestId)
+    {
+        <p><strong>İstek ID:</strong> <code>@Model.RequestId</code></p>
+    }
+</div>
+

@@ -26,6 +26,8 @@ namespace Conq.Noble.Spreadox
 
         public PdfCoverPage Cover { get; } = new PdfCoverPage();
 
+        public PdfHeader Header { get; } = new PdfHeader();
+
         public PdfFooter Footer { get; } = new PdfFooter();
 
         public IReadOnlyList<PdfChartPage> ChartPages => new ReadOnlyCollection<PdfChartPage>(_pages);

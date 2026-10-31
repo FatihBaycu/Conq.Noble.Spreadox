@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using PdfSharpCore.Fonts;
@@ -16,6 +17,14 @@ namespace Conq.Noble.Spreadox.Internal
 
         private static readonly object Gate = new object();
         private static bool _installed;
+
+        // Custom font storage
+        private static readonly ConcurrentDictionary<string, byte[]> CustomFonts
+            = new ConcurrentDictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+
+        // Track which family names have been registered
+        private static readonly ConcurrentDictionary<string, bool> RegisteredFamilies
+            = new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
         public string DefaultFontName => FamilyName;
 
@@ -38,8 +47,78 @@ namespace Conq.Noble.Spreadox.Internal
             }
         }
 
+        /// <summary>
+        /// Register a custom TrueType font from raw bytes. Call before generating any PDF.
+        /// </summary>
+        public static void RegisterFont(string familyName, byte[] ttfBytes, bool isBold = false, bool isItalic = false)
+        {
+            if (string.IsNullOrWhiteSpace(familyName))
+            {
+                throw new ArgumentException("Family name is required.", nameof(familyName));
+            }
+
+            if (ttfBytes is null || ttfBytes.Length == 0)
+            {
+                throw new ArgumentException("Font bytes are required.", nameof(ttfBytes));
+            }
+
+            string faceName = BuildFaceName(familyName, isBold, isItalic);
+            CustomFonts[faceName] = (byte[])ttfBytes.Clone();
+            RegisteredFamilies[familyName] = true;
+        }
+
+        /// <summary>
+        /// Register a custom TrueType font from a file path. Call before generating any PDF.
+        /// </summary>
+        public static void RegisterFont(string familyName, string ttfFilePath, bool isBold = false, bool isItalic = false)
+        {
+            if (string.IsNullOrWhiteSpace(ttfFilePath))
+            {
+                throw new ArgumentException("File path is required.", nameof(ttfFilePath));
+            }
+
+            RegisterFont(familyName, File.ReadAllBytes(ttfFilePath), isBold, isItalic);
+        }
+
+        /// <summary>
+        /// Check whether a custom font family has been registered.
+        /// </summary>
+        internal static bool IsFamilyRegistered(string familyName)
+        {
+            return !string.IsNullOrWhiteSpace(familyName)
+                && RegisteredFamilies.ContainsKey(familyName);
+        }
+
+        private static string BuildFaceName(string familyName, bool isBold, bool isItalic)
+        {
+            string suffix = (isBold, isItalic) switch
+            {
+                (true, true) => "#BI",
+                (true, false) => "#B",
+                (false, true) => "#I",
+                _ => "#R"
+            };
+            return familyName + suffix;
+        }
+
         public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
         {
+            // Check custom fonts first
+            if (!string.IsNullOrEmpty(familyName) && RegisteredFamilies.ContainsKey(familyName))
+            {
+                string face = BuildFaceName(familyName, isBold, isItalic);
+                // If exact match not found, fall back to regular of that family
+                if (!CustomFonts.ContainsKey(face))
+                {
+                    face = BuildFaceName(familyName, false, false);
+                }
+                if (CustomFonts.ContainsKey(face))
+                {
+                    return new FontResolverInfo(face);
+                }
+            }
+
+            // Default Liberation Sans
             if (isBold && isItalic)
             {
                 return new FontResolverInfo(FaceBoldItalic);
@@ -60,6 +139,13 @@ namespace Conq.Noble.Spreadox.Internal
 
         public byte[] GetFont(string faceName)
         {
+            // Check custom fonts first
+            if (CustomFonts.TryGetValue(faceName, out byte[]? customBytes))
+            {
+                return customBytes;
+            }
+
+            // Default Liberation Sans
             string resource = faceName switch
             {
                 FaceBold => "LiberationSans-Bold.ttf",

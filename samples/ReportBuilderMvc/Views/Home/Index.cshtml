@@ -1,0 +1,627 @@
+@model ReportBuilderMvc.Models.ReportConfigViewModel
+@{
+    ViewData["Title"] = "Report Studio";
+    var availableFonts = ViewBag.AvailableFonts as List<string> ?? new List<string> { "Liberation Sans" };
+}
+
+<form id="reportForm" asp-action="Export" method="post" enctype="multipart/form-data">
+    <!-- Top Action Bar -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body p-4 bg-white rounded-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Rapor Başlığı</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="bi bi-file-earmark-text"></i></span>
+                        <input type="text" asp-for="ReportTitle" class="form-control" placeholder="Rapor Başlığı Girin" required />
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Sayfa Düzeni (Layout)</label>
+                    <div class="d-flex gap-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="Layout" value="@ChartLayout.SeparatePages" id="layoutSeparate" checked>
+                            <label class="form-check-label" for="layoutSeparate">
+                                <i class="bi bi-files me-1"></i> Ayrı Sayfalarda
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" asp-for="Layout" value="@ChartLayout.SinglePage" id="layoutSingle">
+                            <label class="form-check-label" for="layoutSingle">
+                                <i class="bi bi-file-earmark me-1"></i> Aynı Sayfada
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Başlık Sayısı</label>
+                    <div class="input-group">
+                        <input type="number" id="randomCountInput" class="form-control" value="10" min="1" max="25" />
+                        <button type="button" id="btnRandomize" class="btn btn-outline-primary" title="Random Veri Üret">
+                            <i class="bi bi-shuffle me-1"></i> Üret
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 text-end">
+                    <input type="hidden" asp-for="Format" id="outputFormatInput" value="@OutputFormat.Pdf" />
+                    <div class="btn-group w-100 shadow-sm" role="group">
+                        <button type="button" id="btnExportPdf" class="btn btn-danger py-2">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> PDF İndir
+                        </button>
+                        <button type="button" id="btnExportExcel" class="btn btn-success py-2">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel İndir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2 bg-white p-2 rounded-3 shadow-sm border" id="reportTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="data-tab" data-bs-toggle="pill" data-bs-target="#data-pane" type="button" role="tab">
+                <i class="bi bi-bar-chart-line-fill me-1"></i> 1. Veri & Grafikler (<span id="seriesCountBadge">@Model.Items.Count</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="header-tab" data-bs-toggle="pill" data-bs-target="#header-pane" type="button" role="tab">
+                <i class="bi bi-layout-text-window me-1"></i> 2. Header (Üstbilgi)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="footer-tab" data-bs-toggle="pill" data-bs-target="#footer-pane" type="button" role="tab">
+                <i class="bi bi-layout-text-window-reverse me-1"></i> 3. Footer (Altbilgi)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cover-tab" data-bs-toggle="pill" data-bs-target="#cover-pane" type="button" role="tab">
+                <i class="bi bi-journal-text me-1"></i> 4. Kapak Sayfası
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="font-tab" data-bs-toggle="pill" data-bs-target="#font-pane" type="button" role="tab">
+                <i class="bi bi-fonts me-1"></i> 5. Font Desteği (.TTF Yükle)
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="reportTabsContent">
+
+        <!-- ======================= TAB 1: DATA & CHARTS ======================= -->
+        <div class="tab-pane fade show active" id="data-pane" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-graph-up text-primary me-2"></i>Üretilen Veriler ve Grafik Tipleri
+                </h5>
+                <div class="d-flex gap-2">
+                    <button type="button" id="btnAddSeries" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-plus-circle me-1"></i> Yeni Başlık Ekle
+                    </button>
+                </div>
+            </div>
+
+            <div id="seriesContainer" class="row g-3">
+                @for (int i = 0; i < Model.Items.Count; i++)
+                {
+                    <div class="col-12 series-item" data-index="@i">
+                        <div class="card data-series-card shadow-sm">
+                            <div class="card-body p-3">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold text-muted mb-1">Başlık Adı (@(i + 1))</label>
+                                        <input type="text" name="Items[@i].Title" class="form-control form-control-sm series-title-input" value="@Model.Items[i].Title" required />
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-semibold text-muted mb-1">Grafik Tipi</label>
+                                        <select name="Items[@i].ChartType" class="form-select form-select-sm series-type-select">
+                                            @foreach (var type in ReportConfigViewModel.AvailableChartTypes)
+                                            {
+                                                <!option value="@type" @(Model.Items[i].ChartType == type ? "selected" : "")>@type</!option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold text-muted mb-1">Grafik Rengi</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="color" name="Items[@i].Color" class="form-control form-control-color" value="@Model.Items[i].Color" style="max-width: 45px;" />
+                                            <input type="text" class="form-control color-text" value="@Model.Items[i].Color" readonly />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-series" title="Bu başlığı sil">
+                                            <i class="bi bi-trash"></i> Sil
+                                        </button>
+                                    </div>
+
+                                    <div class="col-md-6 mt-2">
+                                        <label class="form-label small fw-semibold text-muted mb-1">
+                                            Kategoriler (Virgülle ayrılmış)
+                                        </label>
+                                        <input type="text" name="Items[@i].Categories" class="form-control form-control-sm font-monospace" value="@Model.Items[i].Categories" />
+                                    </div>
+
+                                    <div class="col-md-6 mt-2">
+                                        <label class="form-label small fw-semibold text-muted mb-1">
+                                            Değerler (Virgülle ayrılmış - Doğrudan değiştirebilirsiniz)
+                                        </label>
+                                        <input type="text" name="Items[@i].Values" class="form-control form-control-sm font-monospace" value="@Model.Items[i].Values" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ======================= TAB 2: HEADER CONFIG ======================= -->
+        <div class="tab-pane fade" id="header-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-layout-text-window text-primary me-2"></i>Header (Üstbilgi) Düzenleme
+                    </h5>
+                    <small class="text-muted">Her PDF sayfasının üstünde görünecek başlık, alt metin, logo ve font ayarları.</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Header Başlığı (Title)</label>
+                            <input type="text" asp-for="Header.Title" class="form-control" placeholder="Örn: Aylık Performans Raporu" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Alt Metin / İstenilen Text (Subtitle)</label>
+                            <input type="text" asp-for="Header.Text" class="form-control" placeholder="Örn: Conq.Noble Spreadox ile otomatik oluşturulmuştur" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Header Logosu / Resim (PNG, JPEG)</label>
+                            <input type="file" name="headerLogo" id="headerLogo" class="form-control" accept="image/png,image/jpeg" />
+                            <small class="text-muted">Sayfanın sol üst köşesine orantılı olarak yerleştirilir.</small>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Yazı Tipi (Font Family)</label>
+                            <select asp-for="Header.FontFamily" id="headerFontSelect" class="form-select font-select-list">
+                                <option value="">Varsayılan (Liberation Sans)</option>
+                                @foreach (var font in availableFonts)
+                                {
+                                    <option value="@font">@font</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Başlık Rengi</label>
+                            <div class="input-group">
+                                <input type="color" asp-for="Header.TitleColor" id="headerTitleColor" class="form-control form-control-color" style="max-width: 48px;" />
+                                <input type="text" id="headerTitleColorText" class="form-control" value="@Model.Header.TitleColor" readonly />
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Font Boyutu</label>
+                            <input type="number" asp-for="Header.FontSize" class="form-control" min="8" max="24" step="1" />
+                        </div>
+
+                        <div class="col-md-3 d-flex align-items-center">
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" asp-for="Header.Bold" id="headerBold" />
+                                <label class="form-check-label fw-semibold" for="headerBold">
+                                    Kalın (Bold) Başlık
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= TAB 3: FOOTER CONFIG ======================= -->
+        <div class="tab-pane fade" id="footer-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-layout-text-window-reverse text-primary me-2"></i>Footer (Altbilgi) Düzenleme
+                    </h5>
+                    <small class="text-muted">Sayfaların altında çizgi ile ayrılmış altbilgi, sayfa numarası ve logo.</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Footer Metni (Text)</label>
+                            <input type="text" asp-for="Footer.Text" class="form-control" placeholder="Örn: Gizli - Şirket İçi Kullanım İçindir" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Sayfa Numarası Formatı</label>
+                            <input type="text" asp-for="Footer.PageNumberFormat" class="form-control" placeholder="Page {0} / {1}" />
+                            <small class="text-muted"><code>{0}</code> = Geçerli Sayfa, <code>{1}</code> = Toplam Sayfa</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Footer Logosu / Resim (PNG, JPEG)</label>
+                            <input type="file" name="footerLogo" id="footerLogo" class="form-control" accept="image/png,image/jpeg" />
+                            <small class="text-muted">Footer sol tarafında metin yanında küçük logo olarak görüntülenir.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Yazı Tipi (Font Family)</label>
+                            <select asp-for="Footer.FontFamily" id="footerFontSelect" class="form-select font-select-list">
+                                <option value="">Varsayılan (Liberation Sans)</option>
+                                @foreach (var font in availableFonts)
+                                {
+                                    <option value="@font">@font</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= TAB 4: COVER CONFIG ======================= -->
+        <div class="tab-pane fade" id="cover-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-journal-text text-primary me-2"></i>PDF Kapak Sayfası (Cover Page)
+                    </h5>
+                    <small class="text-muted">PDF raporunun ilk sayfasındaki kurumsal başlık, şirket ve tarih bilgileri.</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Şirket / Kurum Adı</label>
+                            <input type="text" asp-for="Cover.Company" class="form-control" placeholder="Örn: Conq.Noble Tech" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kapak Başlığı</label>
+                            <input type="text" asp-for="Cover.Title" class="form-control" placeholder="Örn: Yıllık Faaliyet ve Veri Raporu" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Rapor Sağlayıcı (Provider)</label>
+                            <input type="text" asp-for="Cover.Provider" class="form-control" placeholder="Örn: Spreadox Reporting System" />
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" asp-for="Cover.IncludeDate" id="coverIncludeDate" />
+                                <label class="form-check-label fw-semibold" for="coverIncludeDate">
+                                    Oluşturulma Tarihini Ekle
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================= TAB 5: FONT REGISTRY ======================= -->
+        <div class="tab-pane fade" id="font-pane" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-fonts text-primary me-2"></i>Özel Font Yükleme & Yönetimi
+                    </h5>
+                    <small class="text-muted">Spreadox PDF motoruna dinamik olarak .ttf TrueType yazı tipi ekleyin.</small>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Font Ailesi Adı (Family Name)</label>
+                            <input type="text" id="fontFamilyNameInput" class="form-control" placeholder="Örn: Roboto, Open Sans, Montserrat" />
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">TrueType Font Dosyası (.ttf)</label>
+                            <input type="file" id="fontFileInput" class="form-control" accept=".ttf" />
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" id="btnUploadFont" class="btn btn-primary w-100">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Fontu Kaydet
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="fontUploadAlert" class="mt-3 d-none alert alert-info"></div>
+
+                    <hr class="my-4" />
+
+                    <h6 class="fw-bold text-secondary mb-2">Sistemde Yüklü Fontlar</h6>
+                    <ul id="registeredFontsList" class="list-group list-group-flush border rounded-3">
+                        @foreach (var font in availableFonts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-check2-circle text-success me-2"></i><strong>@font</strong></span>
+                                <span class="badge bg-secondary">Aktif</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const availableChartTypes = [
+            "ColumnClustered", "ColumnStacked", "BarClustered", "BarStacked",
+            "Line", "LineMarker", "LineStacked", "Area", "AreaStacked",
+            "Pie", "Doughnut", "Scatter", "Radar", "Combo"
+        ];
+
+        // Format selector buttons
+        document.getElementById("btnExportPdf").addEventListener("click", function () {
+            document.getElementById("outputFormatInput").value = "Pdf";
+            document.getElementById("reportForm").submit();
+        });
+
+        document.getElementById("btnExportExcel").addEventListener("click", function () {
+            document.getElementById("outputFormatInput").value = "Excel";
+            document.getElementById("reportForm").submit();
+        });
+
+        // Color picker sync
+        document.addEventListener("input", function (e) {
+            if (e.target.matches("input[type='color']")) {
+                const textInput = e.target.parentElement.querySelector("input[type='text']");
+                if (textInput) {
+                    textInput.value = e.target.value;
+                }
+            }
+        });
+
+        // Randomize data via AJAX
+        document.getElementById("btnRandomize").addEventListener("click", async function () {
+            const count = parseInt(document.getElementById("randomCountInput").value) || 10;
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Üretiliyor...`;
+
+            try {
+                const response = await fetch("/Home/GenerateRandomData", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ count: count })
+                });
+
+                const data = await response.json();
+                if (data.success && data.items) {
+                    renderSeriesItems(data.items);
+                }
+            } catch (err) {
+                alert("Veri üretilirken hata: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="bi bi-shuffle me-1"></i> Üret`;
+            }
+        });
+
+        // Render series items dynamically
+        function renderSeriesItems(items) {
+            const container = document.getElementById("seriesContainer");
+            container.innerHTML = "";
+            document.getElementById("seriesCountBadge").textContent = items.length;
+
+            items.forEach((item, i) => {
+                const card = document.createElement("div");
+                card.className = "col-12 series-item";
+                card.dataset.index = i;
+
+                let optionsHtml = "";
+                availableChartTypes.forEach(t => {
+                    const selected = (t === item.chartType || t === String(item.chartType)) ? "selected" : "";
+                    optionsHtml += `<option value="${t}" ${selected}>${t}</option>`;
+                });
+
+                card.innerHTML = `
+                    <div class="card data-series-card shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Başlık Adı (${i + 1})</label>
+                                    <input type="text" name="Items[${i}].Title" class="form-control form-control-sm series-title-input" value="${item.title}" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Grafik Tipi</label>
+                                    <select name="Items[${i}].ChartType" class="form-select form-select-sm series-type-select">
+                                        ${optionsHtml}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Grafik Rengi</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="color" name="Items[${i}].Color" class="form-control form-control-color" value="${item.color}" style="max-width: 45px;" />
+                                        <input type="text" class="form-control color-text" value="${item.color}" readonly />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-series" title="Bu başlığı sil">
+                                        <i class="bi bi-trash"></i> Sil
+                                    </button>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Kategoriler (Virgülle ayrılmış)</label>
+                                    <input type="text" name="Items[${i}].Categories" class="form-control form-control-sm font-monospace" value="${item.categories}" />
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Değerler (Virgülle ayrılmış - Doğrudan değiştirebilirsiniz)</label>
+                                    <input type="text" name="Items[${i}].Values" class="form-control form-control-sm font-monospace" value="${item.values}" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Remove series item
+        document.getElementById("seriesContainer").addEventListener("click", function (e) {
+            const btn = e.target.closest(".btn-remove-series");
+            if (btn) {
+                const item = btn.closest(".series-item");
+                if (item) {
+                    item.remove();
+                    reindexSeries();
+                }
+            }
+        });
+
+        // Add new series
+        document.getElementById("btnAddSeries").addEventListener("click", function () {
+            const container = document.getElementById("seriesContainer");
+            const newIndex = container.children.length;
+
+            const card = document.createElement("div");
+            card.className = "col-12 series-item";
+            card.dataset.index = newIndex;
+
+            let optionsHtml = "";
+            availableChartTypes.forEach(t => {
+                optionsHtml += `<option value="${t}">${t}</option>`;
+            });
+
+            card.innerHTML = `
+                <div class="card data-series-card shadow-sm">
+                    <div class="card-body p-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted mb-1">Başlık Adı (${newIndex + 1})</label>
+                                <input type="text" name="Items[${newIndex}].Title" class="form-control form-control-sm series-title-input" value="Yeni Başlık ${newIndex + 1}" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted mb-1">Grafik Tipi</label>
+                                <select name="Items[${newIndex}].ChartType" class="form-select form-select-sm series-type-select">
+                                    ${optionsHtml}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-muted mb-1">Grafik Rengi</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="color" name="Items[${newIndex}].Color" class="form-control form-control-color" value="#005293" style="max-width: 45px;" />
+                                    <input type="text" class="form-control color-text" value="#005293" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-series" title="Bu başlığı sil">
+                                    <i class="bi bi-trash"></i> Sil
+                                </button>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label small fw-semibold text-muted mb-1">Kategoriler (Virgülle ayrılmış)</label>
+                                <input type="text" name="Items[${newIndex}].Categories" class="form-control form-control-sm font-monospace" value="Q1, Q2, Q3, Q4" />
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label small fw-semibold text-muted mb-1">Değerler (Virgülle ayrılmış)</label>
+                                <input type="text" name="Items[${newIndex}].Values" class="form-control form-control-sm font-monospace" value="10.5, 25.0, 18.2, 34.1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+            reindexSeries();
+        });
+
+        function reindexSeries() {
+            const items = document.querySelectorAll("#seriesContainer .series-item");
+            document.getElementById("seriesCountBadge").textContent = items.length;
+            items.forEach((item, index) => {
+                item.dataset.index = index;
+                const titleLabel = item.querySelector("label");
+                if (titleLabel) titleLabel.textContent = `Başlık Adı (${index + 1})`;
+
+                item.querySelectorAll("input, select").forEach(el => {
+                    if (el.name) {
+                        el.name = el.name.replace(/Items\[\d+\]/, `Items[${index}]`);
+                    }
+                });
+            });
+        }
+
+        // Upload custom font
+        document.getElementById("btnUploadFont").addEventListener("click", async function () {
+            const fileInput = document.getElementById("fontFileInput");
+            const nameInput = document.getElementById("fontFamilyNameInput");
+            const alertBox = document.getElementById("fontUploadAlert");
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alertBox.className = "mt-3 alert alert-warning";
+                alertBox.textContent = "Lütfen bir .ttf font dosyası seçin.";
+                alertBox.classList.remove("d-none");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("fontFile", fileInput.files[0]);
+            formData.append("fontName", nameInput.value.trim());
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Yükleniyor...`;
+
+            try {
+                const response = await fetch("/Home/UploadFont", {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    alertBox.className = "mt-3 alert alert-success";
+                    alertBox.textContent = result.message;
+                    alertBox.classList.remove("d-none");
+
+                    // Add to dropdowns
+                    const fontSelects = document.querySelectorAll(".font-select-list");
+                    fontSelects.forEach(select => {
+                        const opt = document.createElement("option");
+                        opt.value = result.familyName;
+                        opt.textContent = result.familyName;
+                        select.appendChild(opt);
+                    });
+
+                    // Add to list
+                    const list = document.getElementById("registeredFontsList");
+                    const li = document.createElement("li");
+                    li.className = "list-group-item d-flex justify-content-between align-items-center";
+                    li.innerHTML = `<span><i class="bi bi-check2-circle text-success me-2"></i><strong>${result.familyName}</strong></span> <span class="badge bg-success">Yeni Eklendi</span>`;
+                    list.appendChild(li);
+
+                    fileInput.value = "";
+                    nameInput.value = "";
+                } else {
+                    alertBox.className = "mt-3 alert alert-danger";
+                    alertBox.textContent = result.message;
+                    alertBox.classList.remove("d-none");
+                }
+            } catch (err) {
+                alertBox.className = "mt-3 alert alert-danger";
+                alertBox.textContent = "Hata oluştu: " + err.message;
+                alertBox.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Fontu Kaydet`;
+            }
+        });
+    });
+</script>
+}
+

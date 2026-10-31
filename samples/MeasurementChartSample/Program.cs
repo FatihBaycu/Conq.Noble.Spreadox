@@ -2,6 +2,7 @@ using Conq.Noble.Spreadox;
 
 // Classic measurement-report scenario: stations × values with target line (combo chart).
 string outputDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SpreadoxSamples");
+Console.WriteLine(outputDir);
 Directory.CreateDirectory(outputDir);
 string reportPath = Path.Combine(outputDir, "measurement-report.xlsx");
 string streamPath = Path.Combine(outputDir, "measurement-stream-sample.xlsx");

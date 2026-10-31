@@ -163,6 +163,43 @@ public class PdfReportTests
     {
         Assert.Equal("Conq.Noble.Spreadox", typeof(PdfReport).Namespace);
         Assert.Equal("Conq.Noble.Spreadox", typeof(ExcelWorkbook).Namespace);
+        Assert.Equal("Conq.Noble.Spreadox", typeof(PdfHeader).Namespace);
+        Assert.Equal("Conq.Noble.Spreadox", typeof(PdfFontRegistry).Namespace);
+    }
+
+    [Fact]
+    public void ToByteArray_WithCustomHeader_RendersHeaderContent()
+    {
+        using PdfReport report = PdfReport.Create();
+        report.Header.Title = "Custom Header Title";
+        report.Header.Text = "Custom Subtitle Text";
+        report.Header.Bold = true;
+        report.Header.FontSize = 14;
+        report.Header.TitleColor = ExcelColor.FromRgb(0, 82, 147);
+        report.Header.Logo = PdfImage.FromBytes(TinyPng);
+
+        report.Footer.Text = "Custom Footer Notice";
+        report.Footer.PageNumberFormat = "P. {0} / {1}";
+        report.Footer.Logo = PdfImage.FromBytes(TinyPng);
+
+        PdfChartPage page = report.AddChartPage("Chart 1");
+        page.Chart.AddSeries("S1", new[] { 10.0, 20.0, 30.0 });
+
+        byte[] pdf = report.ToByteArray();
+        AssertPdfHeader(pdf);
+
+        using PdfDocument doc = PdfDocument.Open(pdf);
+        Assert.Equal(2, doc.NumberOfPages);
+
+        string page1Text = PageText(doc.GetPage(1));
+        Assert.Contains("Custom Header Title", page1Text);
+        Assert.Contains("Custom Subtitle Text", page1Text);
+        Assert.Contains("Custom Footer Notice", page1Text);
+
+        string page2Text = PageText(doc.GetPage(2));
+        Assert.Contains("Custom Header Title", page2Text);
+        Assert.Contains("Custom Subtitle Text", page2Text);
+        Assert.Contains("Custom Footer Notice", page2Text);
     }
 
     private static void AssertPdfHeader(byte[] pdf)
