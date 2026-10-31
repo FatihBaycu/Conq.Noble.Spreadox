@@ -4,26 +4,63 @@
 [![CI](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml/badge.svg)](https://github.com/FatihBaycu/Conq.Noble.Spreadox/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-High-level C# library for Excel (`.xlsx`) workbooks **and** A4 PDF chart reports. Excel is built on Microsoft Open XML SDK (`DocumentFormat.OpenXml`). Public API stays free of OpenXml types. PDF charts are drawn as vectors from in-memory points — they are not OOXML charts.
+High-level, dependency-isolated C# library for **native Excel (`.xlsx`) workbooks** and **vector A4 landscape PDF chart reports**.
+
+- **Excel:** Built on Microsoft Open XML SDK (`DocumentFormat.OpenXml`). Open XML types remain internal so your code stays clean. Supports cell styles, formulas, borders, colors, pictures, and native OOXML DrawingML charts.
+- **PDF:** Sharp, scalable vector charts drawn directly from in-memory arrays (powered by `PdfSharpCore`). Includes cover pages, customizable running headers/footers with logos, metric summaries, and runtime TrueType (`.ttf`) font registration.
 
 | | |
-|--|--|
+|---|---|
 | **Package** | `Conq.Noble.Spreadox` |
 | **Namespace** | `Conq.Noble.Spreadox` |
-| **Target** | `netstandard2.0` (.NET Framework 4.8+, .NET 6/8+) |
+| **Target** | `netstandard2.0` (.NET Framework 4.8+, .NET 6/8/9+) |
+| **Release Notes** | [CHANGELOG.md](CHANGELOG.md) |
 | **License** | MIT |
 
-## Install
+---
+
+## Visual Output Examples
+
+### Vector PDF Reports (`PdfReport` & MVC Studio)
+
+Vector charts rendered crisply at any zoom level, with running headers, logos, summary sidebars, and control lines.
+
+| MVC Studio Cover Page | Radar Chart & Header (from MVC Studio) |
+|:---:|:---:|
+| ![PDF Cover](docs/images/mvc-pdf-cover.png) | ![PDF Radar Chart](docs/images/mvc-pdf-chart-radar.png) |
+
+| Station Measurements (Line + UCL/LCL) | Pareto Combo (Bar + Secondary Line) |
+|:---:|:---:|
+| ![PDF Line Chart](docs/images/pdf-sample-chart-line.png) | ![PDF Pareto Chart](docs/images/pdf-sample-chart-pareto.png) |
+
+| Bounce Rate (Pie Chart & Summary) | Bar Chart (with Summary Metrics) |
+|:---:|:---:|
+| ![PDF Pie Chart](docs/images/mvc-pdf-chart-pie.png) | ![PDF Bar Chart](docs/images/mvc-pdf-chart-bar.png) |
+
+### Native Excel Spreadsheets (`ExcelWorkbook`)
+
+Standard OOXML DrawingML charts linked to spreadsheet cell ranges with native formatting and styles.
+
+| Excel Spreadsheet with Combo Chart and Summary Grid |
+|:---:|
+| ![Excel Report Sample](docs/images/excel-sample-report.png) |
+
+---
+
+## Install via NuGet
 
 ```bash
 dotnet add package Conq.Noble.Spreadox
 ```
 
-```csharp
-using Conq.Noble.Spreadox;
+Package Manager:
+```powershell
+Install-Package Conq.Noble.Spreadox
 ```
 
-## Quick usage
+---
+
+## Quick Usage: Excel Workbook
 
 ```csharp
 using Conq.Noble.Spreadox;
@@ -31,6 +68,8 @@ using Conq.Noble.Spreadox;
 using var wb = ExcelWorkbook.Create();
 var sheet = wb.Worksheets[0];
 sheet.Name = "Demo";
+
+// Formatted cells
 sheet["A1"].SetValue("hello");
 sheet["A1"].Style.Font.Bold = true;
 sheet["B1"].SetValue(0.25);
@@ -38,17 +77,23 @@ sheet["B1"].Style.NumberFormat = NumberFormats.Percent;
 sheet.SetFormula("D1", "B1*100", cachedValue: 25);
 sheet.FreezePanes(1);
 
+// Add clustered column chart
 var chart = sheet.Charts.Add(ExcelChartType.ColumnClustered, "Demo chart");
 chart.AddSeries("B2:B10", "A2:A10", name: "Values");
 chart.SetPosition(2, 4, 16, 12);
 
+// Add combo chart (Columns on primary axis, Line on secondary axis)
 var combo = sheet.Charts.Add(ExcelChartType.Combo, "Combo");
 combo.AddSeries("B2:B10", "A2:A10", name: "Bars").AsChartType(ExcelChartType.ColumnClustered);
 combo.AddSeries("C2:C10", "A2:A10", name: "Line").AsChartType(ExcelChartType.Line).OnSecondaryAxis();
 combo.SetPosition(2, 13, 16, 20);
 
 wb.Save(@"C:\temp\demo.xlsx");
+```
 
+### High-Volume Streaming (100k+ rows)
+
+```csharp
 using (var sw = ExcelStreamingWorkbook.Create(@"C:\temp\large.xlsx"))
 {
     var big = sw.AddWorksheet("Rows");
@@ -63,62 +108,138 @@ using (var sw = ExcelStreamingWorkbook.Create(@"C:\temp\large.xlsx"))
 }
 ```
 
-See `samples/MeasurementChartSample` and `samples/FullDemo.NetCore` for longer walkthroughs.
+---
 
-## PDF reports
+## Quick Usage: Vector PDF Reports
 
-`PdfReport` is a second surface in the same package. Use it for cover + one-chart-per-page A4 landscape PDFs (Analyst-style). Series are arrays, not cell ranges.
+`PdfReport` creates publication-ready A4 landscape reports. Series are populated from in-memory arrays rather than worksheet ranges.
 
 ```csharp
+using Conq.Noble.Spreadox;
+
+// Register optional custom TrueType font at runtime
+// PdfFontRegistry.Register("Montserrat", @"C:\fonts\Montserrat-Regular.ttf");
+
 using var report = PdfReport.Create(PdfPageSize.A4Landscape);
-report.Cover.Title = "Analyst native PDF";
-report.Cover.Company = "Conq.Noble";
+report.Margins = PdfMargins.Millimeters(10, 10, 10, 14);
+
+// 1. Cover Page
+report.Cover.Title = "Executive Analytics Report";
+report.Cover.Company = "Conq.Noble Inc.";
+report.Cover.Date = DateTime.Now;
+report.Cover.Provider = "Spreadox Engine";
+report.Cover.AddFact("Scope", "12 Months Performance");
+
+// 2. Running Header (drawn on every page)
+report.Header.Title = "Analyst Native Report";
+report.Header.Text = "Confidential • Internal Distribution Only";
+report.Header.FontSize = 11;
+report.Header.Bold = true;
+report.Header.TitleColor = ExcelColor.FromRgb(0, 82, 147);
+// report.Header.Logo = PdfImage.FromFile("logo.png");
+
+// 3. Running Footer (drawn on every page)
+report.Footer.Text = "Spreadox Reporting Suite";
 report.Footer.PageNumberFormat = "Page {0} / {1}";
 
-var page = report.AddChartPage("Station 12");
+// 4. Add Chart Pages
+string[] months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+double[] values = { 12.4, 11.8, 13.1, 12.0, 14.2, 13.6, 12.9, 15.0, 14.4, 13.2, 12.7, 13.8 };
+
+var page = report.AddChartPage("Station Measurements");
 page.Chart.Type = ExcelChartType.LineMarker;
 page.Chart.AddSeries("Actual", months, values).SetColor(ExcelColor.FromRgb(0, 82, 147));
-page.Chart.AddConstantLine("UCL", 16, ExcelColor.Red);
-page.Summary.Add("Mean", "12.2");
+
+// Reference control lines
+page.Chart.AddConstantLine("UCL", 15.5, ExcelColor.Red);
+page.Chart.AddConstantLine("CL", 13.0, ExcelColor.Green);
+page.Chart.AddConstantLine("LCL", 10.5, ExcelColor.Red);
+
+// Right-hand summary table (up to 28 rows)
+page.Summary.Add("Mean", "13.1");
+page.Summary.Add("Max", "15.0");
+page.Summary.Add("Min", "11.8");
 
 report.Save(@"C:\temp\report.pdf");
 ```
 
-v1 chart kinds: Line+marker, Area, clustered Bar, Pie, Combo (Bar + Line on a 0–100 secondary axis), horizontal constant lines. `BoxAndWhisker` draws as line+marker; stacked-100 draws as clustered bar. Sample: `samples/PdfReportSample`.
+---
 
-## DOM vs streaming
+## Runtime Custom Font Support
 
-| | `ExcelWorkbook` | `ExcelStreamingWorkbook` |
-|--|-----------------|--------------------------|
-| Cell model | In-memory grid | Rows flushed as written |
-| Charts / pictures / CF / open | Yes | Write-only (no charts) |
-| Large exports | OK to tens of k rows | Prefer for 100k+ rows |
-| Strings | Shared string table | `inlineStr` (default) or SST |
+Spreadox embeds **Liberation Sans** by default. You can register any TrueType (`.ttf`) font at runtime before building reports:
 
-## Solution layout
+```csharp
+// From file:
+PdfFontRegistry.Register("Roboto", @"C:\fonts\Roboto-Regular.ttf");
 
-- `src/Conq.Noble.Spreadox` — library
-- `tests/Conq.Noble.Spreadox.Tests` — xUnit + `OpenXmlValidator`
-- `samples/` — net8 and net48 console demos, plus `PdfReportSample`
-- `docs/getting-started.md` — short usage guide
+// Or from byte array (e.g. from file upload or database):
+PdfFontRegistry.Register("CustomFont", fontBytes);
 
-## Build, test, pack
+// Then specify it on Header, Footer, or chart elements:
+report.Header.FontFamily = "Roboto";
+report.Footer.FontFamily = "Roboto";
+```
+
+---
+
+## DOM vs. Streaming Excel
+
+| Feature | `ExcelWorkbook` | `ExcelStreamingWorkbook` |
+|---|---|---|
+| **Cell Model** | In-memory grid | Rows flushed as written |
+| **Charts / Pictures / Conditional Format** | Full support | Not supported (raw data only) |
+| **Large Exports** | Recommended up to tens of thousands of rows | Ideal for 100,000+ to millions of rows |
+| **Strings Storage** | Shared string table | `inlineStr` (default) or SST |
+
+---
+
+## Interactive Samples
+
+Explore the `samples/` directory:
+
+1. **`samples/ReportBuilderMvc` (NEW):**
+   - Full ASP.NET Core MVC Web Studio with **English / Turkish** localization.
+   - Dynamic random data generator with customizable series count.
+   - Per-series chart type picker (`Column`, `Bar`, `Line`, `Area`, `Pie`, `Combo`, etc.).
+   - Live header/footer customization with logo file upload.
+   - Web-based `.ttf` TrueType font uploader and instant registration.
+   - Single-page vs. separate-page export options for both **Excel (`.xlsx`)** and **PDF (`.pdf`)**.
+2. **`samples/MeasurementChartSample`:** Focused console demo for combo charts, statistics, and Excel styling.
+3. **`samples/PdfReportSample`:** Demonstrates multi-page vector PDF reports with cover, combo charts, and control lines.
+4. **`samples/FullDemo.NetCore` / `FullDemo.Net48`:** Deep dive showcasing every Spreadox API feature.
+
+Run the MVC Studio sample:
+```bash
+cd samples/ReportBuilderMvc
+dotnet run
+```
+
+---
+
+## Packaging and Publishing to NuGet
+
+### Building the NuGet Package locally:
 
 ```bash
-dotnet test Conq.Noble.Spreadox.sln -c Release --filter Category!=Perf
 dotnet pack src/Conq.Noble.Spreadox/Conq.Noble.Spreadox.csproj -c Release -o artifacts
 ```
 
-Optional performance suite:
+This generates:
+- `artifacts/Conq.Noble.Spreadox.0.9.0.nupkg`
+- `artifacts/Conq.Noble.Spreadox.0.9.0.snupkg` (Symbols package)
 
+### Publishing to NuGet.org:
+
+Using the .NET CLI:
 ```bash
-dotnet test Conq.Noble.Spreadox.sln -c Release --filter Category=Perf
-# Skip 500k: SPREADOX_SKIP_500K=1
+dotnet nuget push artifacts/Conq.Noble.Spreadox.0.9.0.nupkg --api-key <YOUR_NUGET_API_KEY> --source https://api.nuget.org/v3/index.json
 ```
 
-Or: `./build-and-test.ps1`
+Or via GitHub Actions:
+Tagging a release as `v0.9.0` triggers the automated CI/CD publishing workflow when `NUGET_API_KEY` is configured in repository secrets.
 
-A GitHub Release tagged `v0.8.0` (or later) publishes the package to nuget.org when the `NUGET_API_KEY` repository secret is set.
+---
 
 ## License
 

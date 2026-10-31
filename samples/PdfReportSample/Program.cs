@@ -21,7 +21,11 @@ report.Cover.Date = DateTime.Now;
 report.Cover.Provider = "Spreadox sample";
 report.Cover.AddFact("Tag", "Station-A  mean 13.1  stdev 0.9");
 report.Cover.AddFact("Points", "12 months");
-report.Footer.Text = "Spreadox";
+report.Header.Title = "Analyst Native Report";
+report.Header.Text = "Automated Vector PDF Export • Spreadox Engine";
+report.Header.FontSize = 11;
+report.Header.TitleColor = ExcelColor.FromRgb(0, 82, 147);
+report.Footer.Text = "Spreadox Reporting System";
 report.Footer.PageNumberFormat = "Page {0} / {1}";
 
 PdfChartPage linePage = report.AddChartPage("Station measurements");

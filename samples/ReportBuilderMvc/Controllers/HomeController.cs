@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Conq.Noble.Spreadox;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using ReportBuilderMvc.Models;
 using ReportBuilderMvc.Services;
@@ -9,14 +10,16 @@ namespace ReportBuilderMvc.Controllers;
 public class HomeController : Controller
 {
     private readonly ReportGeneratorService _reportService;
+    private readonly ILocalizationService _loc;
     private readonly IWebHostEnvironment _env;
 
     // Track loaded fonts for UI selection
     private static readonly List<string> AvailableFonts = new() { "Liberation Sans" };
 
-    public HomeController(ReportGeneratorService reportService, IWebHostEnvironment env)
+    public HomeController(ReportGeneratorService reportService, ILocalizationService loc, IWebHostEnvironment env)
     {
         _reportService = reportService;
+        _loc = loc;
         _env = env;
     }
 
@@ -25,28 +28,28 @@ public class HomeController : Controller
     {
         var model = new ReportConfigViewModel
         {
-            ReportTitle = "Quarterly Business Performance",
+            ReportTitle = _loc["DefaultReportTitle"],
             DataSeriesCount = 10,
             Layout = ChartLayout.SeparatePages,
             Format = OutputFormat.Pdf,
             Header = new HeaderConfig
             {
-                Title = "Enterprise Analytics Report",
-                Text = "Automated data extract generated with Spreadox",
+                Title = _loc["DefaultHeaderTitle"],
+                Text = _loc["DefaultHeaderText"],
                 FontSize = 12,
                 Bold = true,
                 TitleColor = "#005293"
             },
             Footer = new FooterConfig
             {
-                Text = "Confidential - Spreadox Reporting Engine",
-                PageNumberFormat = "Page {0} of {1}"
+                Text = _loc["DefaultFooterText"],
+                PageNumberFormat = _loc["DefaultPageNumberFormat"]
             },
             Cover = new CoverConfig
             {
-                Company = "Spreadox Analytics Corp.",
-                Title = "Executive Data Summary",
-                Provider = "Spreadox MVC Sample Suite",
+                Company = _loc["DefaultCoverCompany"],
+                Title = _loc["DefaultCoverTitle"],
+                Provider = _loc["DefaultCoverProvider"],
                 IncludeDate = true
             }
         };
@@ -54,6 +57,23 @@ public class HomeController : Controller
         model.Items = _reportService.GenerateRandomData(model.DataSeriesCount);
         ViewBag.AvailableFonts = AvailableFonts;
         return View(model);
+    }
+
+    [HttpPost]
+    public IActionResult SetLanguage(string culture, string returnUrl = "/")
+    {
+        Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+            new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax
+            }
+        );
+
+        return LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
     }
 
     [HttpPost]
@@ -69,12 +89,12 @@ public class HomeController : Controller
     {
         if (fontFile == null || fontFile.Length == 0)
         {
-            return Json(new { success = false, message = "Please select a valid .ttf font file." });
+            return Json(new { success = false, message = _loc["SelectFontAlert"] });
         }
 
         if (!fontFile.FileName.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase))
         {
-            return Json(new { success = false, message = "Only TrueType font (.ttf) files are supported." });
+            return Json(new { success = false, message = _loc["OnlyTtfSupported"] });
         }
 
         string familyName = string.IsNullOrWhiteSpace(fontName)
@@ -97,11 +117,11 @@ public class HomeController : Controller
                 }
             }
 
-            return Json(new { success = true, familyName, message = $"Font '{familyName}' registered successfully!" });
+            return Json(new { success = true, familyName, message = _loc["FontRegisteredSuccess", familyName] });
         }
         catch (Exception ex)
         {
-            return Json(new { success = false, message = $"Failed to register font: {ex.Message}" });
+            return Json(new { success = false, message = _loc["FontRegistrationFailed", ex.Message] });
         }
     }
 
@@ -172,4 +192,3 @@ public sealed class ErrorViewModel
     public string? RequestId { get; set; }
     public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 }
-
